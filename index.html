@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="screen-orientation" content="landscape">
+<meta name="x5-orientation" content="landscape">
+<meta name="msapplication-tap-highlight" content="no">
 <title>Super Adventure - プラットフォームアクション</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,16 +17,22 @@ html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
+  position: fixed;
+  top: 0; left: 0;
 }
 #gameContainer {
-  position: relative;
+  position: fixed;
+  top: 0; left: 0;
   width: 100%; height: 100%;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 #gameCanvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
@@ -42,47 +51,80 @@ html, body {
   z-index: 10;
 }
 .hud-item { white-space: nowrap; }
+
+/* --- Touch Controls: overlay on top of game --- */
 #touchControls {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 140px;
+  bottom: 0; left: 0; right: 0; top: 0;
   display: none;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 10px 15px;
   z-index: 20;
   pointer-events: none;
 }
+
 .touch-btn {
-  width: 60px; height: 60px;
+  width: 58px; height: 58px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.25);
-  border: 2px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.2);
+  border: 2.5px solid rgba(255,255,255,0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: rgba(255,255,255,0.8);
+  font-size: 22px;
+  color: rgba(255,255,255,0.75);
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.05s;
 }
 .touch-btn:active, .touch-btn.active {
-  background: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.5);
+  border-color: rgba(255,255,255,0.8);
 }
+
+/* Left side: Move buttons at bottom-left */
 #dpad {
-  display: grid;
-  grid-template-columns: 60px 60px 60px;
-  grid-template-rows: 60px 60px;
-  gap: 4px;
-}
-#dpad .touch-btn { width: 56px; height: 56px; }
-#actionButtons {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 10px;
-  align-items: flex-end;
 }
-#btnA { width: 70px; height: 70px; font-size: 20px; font-weight: bold; }
-#btnB { width: 56px; height: 56px; font-size: 16px; margin-bottom: 30px; }
+#dpad .touch-btn {
+  width: 62px; height: 62px;
+}
+
+/* Right side: Action buttons at bottom-right */
+#actionButtons {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+#btnA {
+  width: 68px; height: 68px;
+  font-size: 16px;
+  font-weight: bold;
+  background: rgba(80,180,255,0.25);
+  border-color: rgba(80,180,255,0.55);
+}
+#btnA:active, #btnA.active {
+  background: rgba(80,180,255,0.55);
+}
+#btnB {
+  width: 56px; height: 56px;
+  font-size: 18px;
+  background: rgba(255,120,60,0.25);
+  border-color: rgba(255,120,60,0.55);
+}
+#btnB:active, #btnB.active {
+  background: rgba(255,120,60,0.55);
+}
+
+/* Overlay (title/gameover/clear) */
 #overlay {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -103,17 +145,55 @@ html, body {
   font-size: 18px;
   animation: blink 1s infinite;
 }
+#controlsInfo {
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #ccc;
+  text-shadow: 1px 1px 0 #000;
+  line-height: 1.8;
+  text-align: center;
+}
+#controlsInfo table {
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+#controlsInfo td {
+  padding: 2px 10px;
+  text-align: left;
+}
+#controlsInfo td:first-child {
+  color: #ff0;
+  text-align: right;
+  font-weight: bold;
+}
+@media (pointer: coarse) {
+  #controlsInfo { display: none; }
+}
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
 @media (pointer: coarse) {
-  #touchControls { display: flex; }
+  #touchControls { display: block; }
 }
-@media (max-width: 600px) {
+
+/* Force landscape on mobile portrait - sizes set by JS */
+#gameContainer.rotated {
+  transform: rotate(90deg);
+  transform-origin: top left;
+  position: fixed;
+  top: 0;
+}
+
+@media (max-height: 500px), (pointer: coarse) {
   #hud { font-size: 11px; padding: 5px 8px; }
-  #overlay h1 { font-size: 24px; }
-  #overlay h2 { font-size: 16px; }
+}
+@media (max-height: 400px), ((pointer: coarse) and (orientation: portrait) and (max-width: 500px)) {
+  #overlay h1 { font-size: 24px; margin-bottom: 5px; }
+  #overlay h2 { font-size: 14px; margin-bottom: 15px; }
+  #overlay .start-msg { font-size: 14px; }
+  #controlsInfo { font-size: 11px; margin-bottom: 10px; }
+  #controlsInfo td { padding: 1px 6px; }
 }
 </style>
 </head>
@@ -129,23 +209,23 @@ html, body {
   <div id="overlay">
     <h1>SUPER ADVENTURE</h1>
     <h2>プラットフォームアクション</h2>
+    <div id="controlsInfo"></div>
     <div class="start-msg" id="startMsg">PRESS ENTER or TAP TO START</div>
   </div>
   <div id="touchControls">
+    <!-- Left: Move buttons (bottom-left) -->
     <div id="dpad">
-      <div></div>
-      <div></div>
-      <div></div>
       <div class="touch-btn" id="btnLeft">◀</div>
-      <div class="touch-btn" id="btnDown">▼</div>
       <div class="touch-btn" id="btnRight">▶</div>
     </div>
+    <!-- Right: Action buttons (bottom-right) -->
     <div id="actionButtons">
-      <div class="touch-btn" id="btnB">🔥</div>
       <div class="touch-btn" id="btnA">JUMP</div>
+      <div class="touch-btn" id="btnB">🔥</div>
     </div>
   </div>
 </div>
+
 
 <script>
 // ============================================================
@@ -160,7 +240,7 @@ const TILE = 32;
 const GRAVITY = 0.55;
 const FRICTION = 0.85;
 const MAX_SPEED = 4.5;
-const JUMP_FORCE = -10.5;
+const JUMP_FORCE = -13.0;
 const PLAYER_W = 24;
 const PLAYER_H = 30;
 const PLAYER_BIG_H = 54;
@@ -173,43 +253,130 @@ const STAR_DURATION = 600;
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+const container = document.getElementById('gameContainer');
+const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
 function resizeCanvas() {
-  const cw = window.innerWidth;
-  const ch = window.innerHeight;
-  // Game internal resolution
-  canvas.width = Math.min(800, cw);
-  canvas.height = Math.min(480, ch);
-  // Scale to fill screen
-  const scaleX = cw / canvas.width;
-  const scaleY = ch / canvas.height;
-  const scale = Math.min(scaleX, scaleY);
-  canvas.style.width = (canvas.width * scale) + 'px';
-  canvas.style.height = (canvas.height * scale) + 'px';
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const portrait = isTouch && vh > vw;
+
+  // Actual game area dimensions
+  const gameW = portrait ? vh : vw;
+  const gameH = portrait ? vw : vh;
+
+  if (portrait) {
+    // Rotate container: move left edge to right side, rotate 90deg CCW
+    container.classList.add('rotated');
+    container.style.left = vw + 'px';
+    container.style.width = gameW + 'px';
+    container.style.height = gameH + 'px';
+  } else {
+    container.classList.remove('rotated');
+    container.style.left = '0';
+    container.style.width = vw + 'px';
+    container.style.height = vh + 'px';
+  }
+
+  // Canvas internal resolution
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.min(960, Math.floor(gameW * dpr));
+  canvas.height = Math.min(540, Math.floor(gameH * dpr));
+  // CSS: fill container
+  canvas.style.width = gameW + 'px';
+  canvas.style.height = gameH + 'px';
 }
 window.addEventListener('resize', resizeCanvas);
+window.addEventListener('orientationchange', () => {
+  setTimeout(resizeCanvas, 100);
+  setTimeout(resizeCanvas, 300);
+});
 resizeCanvas();
 
 // --- Sound System (Web Audio) ---
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
-function ensureAudio() {
-  if (!audioCtx) audioCtx = new AudioCtx();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
+let audioUnlocked = false;
+let pendingBgmStart = false;
+
+async function ensureAudio() {
+  if (!AudioCtx) return false;
+
+  if (!audioCtx) {
+    try {
+      audioCtx = new AudioCtx();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  if (audioCtx.state !== 'running') {
+    try {
+      await audioCtx.resume();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  if (!audioUnlocked && audioCtx.state === 'running') {
+    try {
+      const buf = audioCtx.createBuffer(1, 1, 22050);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      src.connect(audioCtx.destination);
+      src.start(0);
+      audioUnlocked = true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  if (pendingBgmStart && audioCtx && audioCtx.state === 'running' && game.state === 'playing') {
+    pendingBgmStart = false;
+    startBGM();
+  }
+
+  return !!audioCtx && audioCtx.state === 'running';
 }
 
+// Valid oscillator types only: sine, square, sawtooth, triangle
+const VALID_OSC_TYPES = ['sine', 'square', 'sawtooth', 'triangle'];
+
 function playTone(freq, duration, type, vol) {
-  if (!audioCtx) return;
+  if (!audioCtx || audioCtx.state !== 'running') return;
   try {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = type || 'square';
+    osc.type = VALID_OSC_TYPES.includes(type) ? type : 'square';
     osc.frequency.value = freq;
-    gain.gain.setValueAtTime(vol || 0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    const t = audioCtx.currentTime;
+    gain.gain.setValueAtTime(vol || 0.1, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch(e) {}
+}
+
+// Noise-like sound using white noise buffer (for block break etc.)
+function playNoise(duration, vol) {
+  if (!audioCtx || audioCtx.state !== 'running') return;
+  try {
+    const sampleRate = audioCtx.sampleRate;
+    const len = Math.floor(sampleRate * duration);
+    const buf = audioCtx.createBuffer(1, len, sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    const gain = audioCtx.createGain();
+    const t = audioCtx.currentTime;
+    gain.gain.setValueAtTime(vol || 0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
+    src.start(t);
   } catch(e) {}
 }
 
@@ -225,7 +392,7 @@ const SFX = {
   goalPole() { for(let i=0;i<8;i++) setTimeout(()=>playTone(523+i*50,0.12,'square',0.07), i*80); },
   star() { playTone(1047, 0.05, 'square', 0.06); },
   oneUp() { for(let i=0;i<4;i++) setTimeout(()=>playTone(600+i*150,0.1,'square',0.07), i*70); },
-  blockBreak() { playTone(300, 0.05, 'noise', 0.08); playTone(200, 0.1, 'square', 0.06); },
+  blockBreak() { playNoise(0.08, 0.08); playTone(200, 0.1, 'square', 0.06); },
   ice() { playTone(1200, 0.1, 'sine', 0.06); setTimeout(()=>playTone(1600, 0.15, 'sine', 0.06), 60); },
 };
 
@@ -241,10 +408,15 @@ let bgmPlaying = false;
 
 function startBGM() {
   if (bgmPlaying) return;
+  if (!audioCtx || audioCtx.state !== 'running') {
+    pendingBgmStart = true;
+    return;
+  }
   bgmPlaying = true;
+  pendingBgmStart = false;
   bgmIdx = 0;
   bgmInterval = setInterval(() => {
-    if (!audioCtx || game.state !== 'playing') return;
+    if (!audioCtx || audioCtx.state !== 'running' || game.state !== 'playing') return;
     const note = bgmNotes[bgmIdx % bgmNotes.length];
     if (note > 0) playTone(note, 0.1, 'square', 0.03);
     bgmIdx++;
@@ -257,12 +429,12 @@ function stopBGM() {
 
 // --- Input System ---
 const keys = {};
-const touchState = { left: false, right: false, down: false, jump: false, fire: false };
+const touchState = { left: false, right: false, jump: false, fire: false };
 
 document.addEventListener('keydown', e => {
   keys[e.code] = true;
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-  if (e.code === 'Enter' && game.state !== 'playing') startGame();
+  if (e.code === 'Enter' && game.state === 'title') startGame();
 });
 document.addEventListener('keyup', e => { keys[e.code] = false; });
 
@@ -281,7 +453,6 @@ function setupTouch() {
   }
   bind('btnLeft', 'left');
   bind('btnRight', 'right');
-  bind('btnDown', 'down');
   bind('btnA', 'jump');
   bind('btnB', 'fire');
 }
@@ -289,18 +460,17 @@ setupTouch();
 
 function isLeft() { return keys['ArrowLeft'] || keys['KeyA'] || touchState.left; }
 function isRight() { return keys['ArrowRight'] || keys['KeyD'] || touchState.right; }
-function isDown() { return keys['ArrowDown'] || keys['KeyS'] || touchState.down; }
 function isJump() { return keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || touchState.jump; }
 function isFire() { return keys['KeyX'] || keys['ShiftLeft'] || keys['ShiftRight'] || touchState.fire; }
 
 // Tap overlay to start
 document.getElementById('overlay').addEventListener('click', () => {
   ensureAudio();
-  if (game.state !== 'playing') startGame();
+  if (game.state === 'title') startGame();
 });
 document.getElementById('overlay').addEventListener('touchstart', (e) => {
   e.preventDefault(); ensureAudio();
-  if (game.state !== 'playing') startGame();
+  if (game.state === 'title') startGame();
 }, {passive:false});
 
 // --- Color Palette ---
@@ -484,7 +654,6 @@ class Player {
     this.starTimer = 0;
     this.invincible = false;
     this.invincibleTimer = 0;
-    this.crouching = false;
     this.alive = true;
     this.deathTimer = 0;
     this.deathVy = 0;
@@ -496,7 +665,6 @@ class Player {
   get isBig() { return this.state !== 'small'; }
   get currentH() {
     if (this.state === 'small') return PLAYER_H;
-    if (this.crouching) return PLAYER_H + 4;
     return PLAYER_BIG_H;
   }
 }
@@ -969,28 +1137,7 @@ function drawPlayer(p) {
     return;
   }
 
-  if (p.crouching && p.isBig) {
-    // Crouching big player
-    const ch = p.currentH;
-    // Hat
-    ctx.fillStyle = hatColor;
-    ctx.fillRect(sx, sy, w, 12);
-    ctx.fillRect(sx - 4, sy + 4, w + 8, 8);
-    // Face
-    ctx.fillStyle = skinColor;
-    ctx.fillRect(sx + 2, sy + 12, w - 4, 10);
-    // Eyes
-    ctx.fillStyle = '#000';
-    ctx.fillRect(sx + 6, sy + 14, 3, 4);
-    ctx.fillRect(sx + w - 9, sy + 14, 3, 4);
-    // Body
-    ctx.fillStyle = overallColor;
-    ctx.fillRect(sx + 1, sy + 22, w - 2, ch - 26);
-    // Shoes
-    ctx.fillStyle = COLORS.playerShoe;
-    ctx.fillRect(sx, sy + ch - 6, 10, 6);
-    ctx.fillRect(sx + w - 10, sy + ch - 6, 10, 6);
-  } else if (p.isBig) {
+  if (p.isBig) {
     // Big player
     // Hat
     ctx.fillStyle = hatColor;
@@ -1449,9 +1596,6 @@ function updatePlayer() {
   if (isLeft()) { p.vx -= accel; p.facing = -1; }
   if (isRight()) { p.vx += accel; p.facing = 1; }
 
-  p.crouching = isDown() && p.isBig && p.grounded;
-  if (p.crouching) p.vx *= 0.8;
-
   // Speed limit
   p.vx = Math.max(-MAX_SPEED, Math.min(MAX_SPEED, p.vx));
   // Friction
@@ -1459,7 +1603,7 @@ function updatePlayer() {
   if (Math.abs(p.vx) < 0.1) p.vx = 0;
 
   // Jump
-  if (isJump() && p.grounded && !p.jumping && !p.crouching) {
+  if (isJump() && p.grounded && !p.jumping) {
     p.vy = JUMP_FORCE;
     p.grounded = false;
     p.jumping = true;
@@ -1470,7 +1614,7 @@ function updatePlayer() {
   if (!isJump() && p.vy < -3) p.vy = -3;
 
   // Fireball
-  if (isFire() && (p.state === 'fire' || p.state === 'ice') && p.canFireball && !p.crouching) {
+  if (isFire() && (p.state === 'fire' || p.state === 'ice') && p.canFireball) {
     if (fireballs.length < 2) {
       const fbType = p.state === 'fire' ? 'fire' : 'ice';
       fireballs.push(new Fireball(
@@ -1555,7 +1699,7 @@ function updatePlayer() {
         SFX.goalPole();
         stopBGM();
         // Score based on height
-        const heightBonus = Math.max(0, (game.level.groundY * TILE - p.y)) * 2;
+        const heightBonus = Math.floor(Math.max(0, (game.level.groundY * TILE - p.y)) * 2);
         game.score += heightBonus;
         floatingTexts.push(new FloatingText(p.x + p.w / 2, p.y - 20, '+' + heightBonus, '#ff0'));
       }
@@ -1873,8 +2017,8 @@ function updateCamera() {
 
 // --- Main Game Functions ---
 
-function startGame() {
-  ensureAudio();
+async function startGame() {
+  const audioReady = await ensureAudio();
   game.state = 'playing';
   game.score = 0;
   game.coins = 0;
@@ -1897,12 +2041,16 @@ function startGame() {
     enemies.push(new Enemy(es.x * TILE, es.y * TILE - ENEMY_H, es.type));
   });
 
-  startBGM();
+  if (audioReady) {
+    startBGM();
+  } else {
+    pendingBgmStart = true;
+  }
   updateHUD();
 }
 
 function updateHUD() {
-  document.getElementById('hudScore').textContent = 'SCORE: ' + game.score;
+  document.getElementById('hudScore').textContent = 'SCORE: ' + Math.floor(game.score);
   document.getElementById('hudCoins').textContent = 'COINS: ' + game.coins;
   document.getElementById('hudWorld').textContent = 'WORLD ' + game.world + '-1';
   document.getElementById('hudTime').textContent = 'TIME: ' + game.time;
@@ -1990,7 +2138,7 @@ function gameLoop() {
       ctx.textAlign = 'center';
       ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 20);
       ctx.font = '18px Arial';
-      ctx.fillText('SCORE: ' + game.score, canvas.width / 2, canvas.height / 2 + 20);
+      ctx.fillText('SCORE: ' + Math.floor(game.score), canvas.width / 2, canvas.height / 2 + 20);
       ctx.font = '16px Arial';
       ctx.fillStyle = '#ff0';
       ctx.fillText('PRESS ENTER or TAP to RESTART', canvas.width / 2, canvas.height / 2 + 60);
@@ -2006,7 +2154,7 @@ function gameLoop() {
       ctx.fillText('STAGE CLEAR!', canvas.width / 2, canvas.height / 2 - 30);
       ctx.fillStyle = '#fff';
       ctx.font = '22px Arial';
-      ctx.fillText('SCORE: ' + game.score, canvas.width / 2, canvas.height / 2 + 15);
+      ctx.fillText('SCORE: ' + Math.floor(game.score), canvas.width / 2, canvas.height / 2 + 15);
       ctx.font = '14px Arial';
       ctx.fillText('TIME BONUS: ' + (game.time * 50), canvas.width / 2, canvas.height / 2 + 40);
       ctx.font = '16px Arial';
@@ -2101,66 +2249,93 @@ function drawTitleScreen() {
   });
 }
 
-// Handle restart from gameover / clear
-document.addEventListener('keydown', e => {
-  if (e.code === 'Enter') {
-    if (game.state === 'gameover') {
-      startGame();
-    } else if (game.state === 'clear') {
-      // Add time bonus
-      game.score += game.time * 50;
-      game.world++;
-      if (game.world > 3) game.world = 1;
-      game.time = 300;
-      game.timeTimer = 0;
-      game.level = generateLevel(game.world);
-      game.player = new Player(3 * TILE, game.level.groundY * TILE - PLAYER_H);
-      game.camera = { x: 0, y: 0 };
-      enemies = [];
-      items = [];
-      fireballs = [];
-      particles = [];
-      floatingTexts = [];
-      game.state = 'playing';
-      game.level.enemySpawns.forEach(es => {
-        enemies.push(new Enemy(es.x * TILE, es.y * TILE - ENEMY_H, es.type));
-      });
-      startBGM();
-      document.getElementById('overlay').classList.add('hidden');
-      updateHUD();
-    }
+// Next stage transition
+async function nextStage() {
+  const audioReady = await ensureAudio();
+  game.score += game.time * 50;
+  game.world++;
+  if (game.world > 3) game.world = 1;
+  game.time = 300;
+  game.timeTimer = 0;
+  game.level = generateLevel(game.world);
+  game.player = new Player(3 * TILE, game.level.groundY * TILE - PLAYER_H);
+  game.camera = { x: 0, y: 0 };
+  enemies = [];
+  items = [];
+  fireballs = [];
+  particles = [];
+  floatingTexts = [];
+  game.state = 'playing';
+  game.level.enemySpawns.forEach(es => {
+    enemies.push(new Enemy(es.x * TILE, es.y * TILE - ENEMY_H, es.type));
+  });
+  if (audioReady) {
+    startBGM();
+  } else {
+    pendingBgmStart = true;
   }
-});
+  document.getElementById('overlay').classList.add('hidden');
+  updateHUD();
+}
 
-// Touch restart
-document.addEventListener('touchstart', e => {
+async function handleRestart() {
+  await ensureAudio();
   if (game.state === 'gameover') {
-    e.preventDefault();
     startGame();
   } else if (game.state === 'clear') {
+    nextStage();
+  }
+}
+
+// Handle restart from gameover / clear
+document.addEventListener('keydown', e => {
+  if (e.code === 'Enter') handleRestart();
+});
+document.addEventListener('touchstart', e => {
+  if (game.state === 'gameover' || game.state === 'clear') {
     e.preventDefault();
-    game.score += game.time * 50;
-    game.world++;
-    if (game.world > 3) game.world = 1;
-    game.time = 300;
-    game.timeTimer = 0;
-    game.level = generateLevel(game.world);
-    game.player = new Player(3 * TILE, game.level.groundY * TILE - PLAYER_H);
-    game.camera = { x: 0, y: 0 };
-    enemies = [];
-    items = [];
-    fireballs = [];
-    particles = [];
-    floatingTexts = [];
-    game.state = 'playing';
-    game.level.enemySpawns.forEach(es => {
-      enemies.push(new Enemy(es.x * TILE, es.y * TILE - ENEMY_H, es.type));
-    });
-    startBGM();
-    document.getElementById('overlay').classList.add('hidden');
-    updateHUD();
+    handleRestart();
   }
 }, {passive: false});
+
+// Set controls info for PC
+document.getElementById('controlsInfo').innerHTML = 
+  '<table>' +
+  '<tr><td>← →</td><td>移動</td></tr>' +
+  '<tr><td>↑ / Space</td><td>ジャンプ</td></tr>' +
+  '<tr><td>X / Shift</td><td>ファイアボール / アイスボール</td></tr>' +
+  '<tr><td>Enter</td><td>スタート</td></tr>' +
+  '</table>';
+
+// Try to lock screen orientation to landscape on mobile
+function tryLockOrientation() {
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape-primary').catch(() => {});
+    }
+  } catch(e) {}
+}
+
+// Global touch handler: ensure audio is unlocked on ANY touch
+// Mobile Chrome requires AudioContext creation/resume inside a user gesture
+document.addEventListener('touchstart', function globalTouchAudio() {
+  ensureAudio();
+  tryLockOrientation();
+}, { passive: true });
+document.addEventListener('click', function globalClickAudio() {
+  ensureAudio();
+}, { passive: true });
+
+
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    ensureAudio();
+  }
+});
+window.addEventListener('pageshow', () => {
+  ensureAudio();
+});
 
 // Start the game loop
 requestAnimationFrame(gameLoop);
